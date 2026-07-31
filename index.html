@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Search Bridge</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #000;
+      color: #fff;
+      padding: 15px;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    #status { color: #00e676; font-weight: bold; margin-bottom: 10px; }
+    #transcript { color: #888; font-style: italic; margin-bottom: 10px; }
+    #result { font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <div id="status">In ascolto... Parla ora!</div>
+  <div id="transcript"></div>
+  <hr>
+  <div id="result">In attesa dell'input vocale...</div>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+    const transcriptDiv = document.getElementById('transcript');
+    const resultDiv = document.getElementById('result');
+
+    // Inizializzazione Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      statusDiv.innerText = "Errore";
+      resultDiv.innerText = "Il riconoscimento vocale non è supportato da questo browser.";
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'it-IT';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      // Avvio automatico dell'ascolto all'apertura
+      recognition.start();
+
+      recognition.onresult = (event) => {
+        const query = event.results[0][0].transcript;
+        statusDiv.innerText = "Elaborazione...";
+        transcriptDiv.innerText = `Hai detto: "${query}"`;
+        fetchResults(query);
+      };
+
+      recognition.onerror = (event) => {
+        statusDiv.innerText = "Errore vocale";
+        resultDiv.innerText = "Impossibile rilevare la voce: " + event.error;
+      };
+
+      recognition.onend = () => {
+        if (statusDiv.innerText === "In ascolto... Parla ora!") {
+          statusDiv.innerText = "Ascolto terminato.";
+        }
+      };
+    }
+
+    // Funzione per cercare i dati
+    async function fetchResults(query) {
+      try {
+        const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+        const data = await response.json();
+
+        let output = "";
+
+        if (data.AbstractText) {
+          output = data.AbstractText;
+        } else if (data.Definition) {
+          output = data.Definition;
+        } else if (data.RelatedTopics && data.RelatedTopics.length > 0 && data.RelatedTopics[0].Text) {
+          output = data.RelatedTopics[0].Text;
+        } else {
+          output = "Nessun risultato trovato per: " + query;
+        }
+
+        statusDiv.innerText = "Completato";
+        resultDiv.innerText = output;
+
+        // Opzionale: Sintesi vocale per riprodurre la risposta a voce
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(output);
+          utterance.lang = 'it-IT';
+          window.speechSynthesis.speak(utterance);
+        }
+
+      } catch (err) {
+        statusDiv.innerText = "Errore di connessione";
+        resultDiv.innerText = "Impossibile recuperare i risultati della ricerca.";
+      }
+    }
+  </script>
+</body>
+</html>
