@@ -2,21 +2,31 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Emulatore WebAssembly</title>
+<title>Emulatore x86 WebAssembly con Log</title>
 <script src="https://copy.sh/v86/build/v86.js"></script>
 <style>
 body { background:#111; color:#eee; font-family:monospace; }
-#screen { width:800px; height:600px; border:1px solid #444; }
+#screen { width:800px; height:600px; border:1px solid #444; margin-bottom:20px; }
+#log { white-space:pre; background:#222; padding:10px; border-radius:5px; height:300px; overflow-y:auto; }
 </style>
 </head>
 <body>
 
-<h2>Emulatore x86 WebAssembly</h2>
+<h2>Emulatore x86 WebAssembly + Log BIOS</h2>
 <input type="file" id="fileInput" accept=".bin,.img">
 <div id="screen"></div>
 
+<h3>Log BIOS / CPU</h3>
+<div id="log"></div>
+
 <script>
 let emulator;
+
+function appendLog(text) {
+    const logDiv = document.getElementById("log");
+    logDiv.textContent += text + "\n";
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
 
 document.getElementById("fileInput").addEventListener("change", async function(e) {
     const file = e.target.files[0];
@@ -31,9 +41,14 @@ document.getElementById("fileInput").addEventListener("change", async function(e
         memory_size: 64 * 1024 * 1024,
         vga_memory_size: 8 * 1024 * 1024,
         screen_container: document.getElementById("screen"),
-        fda: { buffer: buffer },   // carica floppy .bin/.img
-        autostart: true
+        fda: { buffer: buffer },
+        autostart: true,
+        log_level: 1, // abilita log
+        logger: appendLog
     });
+
+    appendLog("=== Avvio emulatore ===");
+    appendLog("Caricato file: " + file.name);
 });
 </script>
 
