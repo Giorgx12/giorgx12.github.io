@@ -2,8 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Emulatore x86 WebAssembly con Log</title>
-<script src="https://copy.sh/v86/build/v86.js"></script>
+<title>Emulatore x86 WebAssembly + Log</title>
+
+<!-- v86 ufficiale -->
+<script src="https://v86.js.org/libv86.js"></script>
+
 <style>
 body { background:#111; color:#eee; font-family:monospace; }
 #screen { width:800px; height:600px; border:1px solid #444; margin-bottom:20px; }
@@ -37,13 +40,19 @@ document.getElementById("fileInput").addEventListener("change", async function(e
     if (emulator) emulator.stop();
 
     emulator = new V86({
-        wasm_path: "https://copy.sh/v86/build/v86.wasm",
         memory_size: 64 * 1024 * 1024,
         vga_memory_size: 8 * 1024 * 1024,
         screen_container: document.getElementById("screen"),
+
+        // BIOS e VGA BIOS funzionanti
+        bios: { url: "https://v86.js.org/bios/seabios.bin" },
+        vga_bios: { url: "https://v86.js.org/bios/vgabios.bin" },
+
+        // floppy
         fda: { buffer: buffer },
+
         autostart: true,
-        log_level: 1, // abilita log
+        log_level: 1,
         logger: appendLog
     });
 
