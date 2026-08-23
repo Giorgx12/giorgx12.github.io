@@ -2,10 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Emulatore x86 WebAssembly + Log</title>
+<title>Emulatore x86 WebAssembly + Log BIOS</title>
 
-<!-- v86 ufficiale -->
-<script src="https://v86.js.org/libv86.js"></script>
+<script src="https://v86.js.org/build/libv86.js"></script>
 
 <style>
 body { background:#111; color:#eee; font-family:monospace; }
@@ -44,17 +43,16 @@ document.getElementById("fileInput").addEventListener("change", async function(e
         vga_memory_size: 8 * 1024 * 1024,
         screen_container: document.getElementById("screen"),
 
-        // BIOS e VGA BIOS funzionanti
         bios: { url: "https://v86.js.org/bios/seabios.bin" },
         vga_bios: { url: "https://v86.js.org/bios/vgabios.bin" },
 
-        // floppy
         fda: { buffer: buffer },
 
         autostart: true,
-        log_level: 1,
-        logger: appendLog
+        log_level: 1
     });
+
+    emulator.add_listener("log", appendLog);
 
     appendLog("=== Avvio emulatore ===");
     appendLog("Caricato file: " + file.name);
