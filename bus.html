@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kindle Clock</title>
+<style>
+  body {
+    margin: 0;
+    background: #fff;
+  }
+  canvas {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="k" width="600" height="800"></canvas>
+
+<script>
+const W = 600;
+const H = 800;
+const target = new Date("2026-12-31T23:59:59"); // <-- CAMBIA QUI IL TUO C145
+
+function draw() {
+  const c = document.getElementById("k");
+  const ctx = c.getContext("2d");
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, W, H);
+
+  const now = new Date();
+  const diff = target - now;
+
+  const hours = now.toLocaleTimeString("it-IT", {hour12: false});
+  const daysLeft = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hoursLeft = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minsLeft = Math.floor((diff / (1000 * 60)) % 60);
+  const secsLeft = Math.floor((diff / 1000) % 60);
+
+  ctx.fillStyle = "black";
+  ctx.font = "70px Arial";
+  ctx.fillText("Ora:", 40, 120);
+  ctx.font = "90px Arial";
+  ctx.fillText(hours, 40, 220);
+
+  ctx.font = "70px Arial";
+  ctx.fillText("Countdown:", 40, 360);
+
+  ctx.font = "80px Arial";
+  ctx.fillText(
+    `${daysLeft}g ${hoursLeft}h ${minsLeft}m ${secsLeft}s`,
+    40,
+    460
+  );
+
+  // Ritardo rispetto a un orario fisso (esempio: 15:00)
+  const ref = new Date();
+  ref.setHours(15, 0, 0, 0);
+  const delay = now - ref;
+  const delayMin = Math.floor(delay / 60000);
+
+  ctx.font = "70px Arial";
+  ctx.fillText("Ritardo:", 40, 600);
+
+  ctx.font = "80px Arial";
+  ctx.fillText(`${delayMin} min`, 40, 700);
+}
+
+setInterval(draw, 1000);
+draw();
+</script>
+
+</body>
+</html>
