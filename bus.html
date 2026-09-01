@@ -2,16 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kindle Clock</title>
+<title>Kindle C145 Inverigo</title>
 <style>
-  body {
-    margin: 0;
-    background: #fff;
-  }
-  canvas {
-    display: block;
-    margin: 0 auto;
-  }
+  body { margin: 0; background: #fff; }
+  canvas { display: block; margin: 0 auto; }
 </style>
 </head>
 <body>
@@ -21,9 +15,36 @@
 <script>
 const W = 600;
 const H = 800;
-const target = new Date("2026-12-31T23:59:59"); // <-- CAMBIA QUI IL TUO C145
 
-function draw() {
+// Fermata Moovit: Inverigo Municipio
+const MOOVIT_URL =
+  "https://moovitapp.com/ws/nextArrivals?stopId=401020&metroAreaId=1020";
+
+// Proxy per CORS
+const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(MOOVIT_URL);
+
+async function getMoovit() {
+  try {
+    const r = await fetch(PROXY);
+    const data = await r.json();
+    const json = JSON.parse(data.contents);
+
+    // Filtra solo la linea C145
+    const next = json.nextArrivals.find(x => x.lineName.includes("145"));
+    if (!next) return null;
+
+    return {
+      line: next.lineName,
+      aimed: new Date(next.aimedArrivalTime),
+      expected: new Date(next.expectedArrivalTime)
+    };
+  } catch (e) {
+    console.log("Errore Moovit:", e);
+    return null;
+  }
+}
+
+function draw(info) {
   const c = document.getElementById("k");
   const ctx = c.getContext("2d");
 
@@ -31,13 +52,7 @@ function draw() {
   ctx.fillRect(0, 0, W, H);
 
   const now = new Date();
-  const diff = target - now;
-
   const hours = now.toLocaleTimeString("it-IT", {hour12: false});
-  const daysLeft = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hoursLeft = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const minsLeft = Math.floor((diff / (1000 * 60)) % 60);
-  const secsLeft = Math.floor((diff / 1000) % 60);
 
   ctx.fillStyle = "black";
   ctx.font = "70px Arial";
@@ -45,31 +60,40 @@ function draw() {
   ctx.font = "90px Arial";
   ctx.fillText(hours, 40, 220);
 
+  if (!info) {
+    ctx.font = "60px Arial";
+    ctx.fillText("Nessun C145", 40, 400);
+    return;
+  }
+
+  // Countdown
+  const diff = info.expected - now;
+  const mins = Math.floor(diff / 60000);
+  const secs = Math.floor((diff / 1000) % 60);
+
   ctx.font = "70px Arial";
   ctx.fillText("Countdown:", 40, 360);
 
   ctx.font = "80px Arial";
-  ctx.fillText(
-    `${daysLeft}g ${hoursLeft}h ${minsLeft}m ${secsLeft}s`,
-    40,
-    460
-  );
+  ctx.fillText(`${mins}m ${secs}s`, 40, 460);
 
-  // Ritardo rispetto a un orario fisso (esempio: 15:00)
-  const ref = new Date();
-  ref.setHours(15, 0, 0, 0);
-  const delay = now - ref;
-  const delayMin = Math.floor(delay / 60000);
+  // Ritardo
+  const delay = Math.floor((info.expected - info.aimed) / 60000);
 
   ctx.font = "70px Arial";
   ctx.fillText("Ritardo:", 40, 600);
 
   ctx.font = "80px Arial";
-  ctx.fillText(`${delayMin} min`, 40, 700);
+  ctx.fillText(`${delay} min`, 40, 700);
 }
 
-setInterval(draw, 1000);
-draw();
+async function update() {
+  const info = await getMoovit();
+  draw(info);
+}
+
+setInterval(update, 10000);
+update();
 </script>
 
 </body>
