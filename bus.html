@@ -2,10 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kindle C145 Inverigo</title>
+<title>C145 Inverigo Monitor</title>
 <style>
   body { margin: 0; background: #fff; }
-  canvas { display: block; margin: 0 auto; }
 </style>
 </head>
 <body>
@@ -16,30 +15,23 @@
 const W = 600;
 const H = 800;
 
-// Fermata Moovit: Inverigo Municipio
 const MOOVIT_URL =
   "https://moovitapp.com/ws/nextArrivals?stopId=401020&metroAreaId=1020";
 
-// Proxy per CORS
-const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(MOOVIT_URL);
+const PROXY = "https://corsproxy.io/?" + encodeURIComponent(MOOVIT_URL);
 
 async function getMoovit() {
   try {
     const r = await fetch(PROXY);
-    const data = await r.json();
-    const json = JSON.parse(data.contents);
-
-    // Filtra solo la linea C145
+    const json = await r.json();
     const next = json.nextArrivals.find(x => x.lineName.includes("145"));
     if (!next) return null;
 
     return {
-      line: next.lineName,
       aimed: new Date(next.aimedArrivalTime),
       expected: new Date(next.expectedArrivalTime)
     };
   } catch (e) {
-    console.log("Errore Moovit:", e);
     return null;
   }
 }
@@ -66,23 +58,19 @@ function draw(info) {
     return;
   }
 
-  // Countdown
   const diff = info.expected - now;
   const mins = Math.floor(diff / 60000);
   const secs = Math.floor((diff / 1000) % 60);
 
   ctx.font = "70px Arial";
   ctx.fillText("Countdown:", 40, 360);
-
   ctx.font = "80px Arial";
   ctx.fillText(`${mins}m ${secs}s`, 40, 460);
 
-  // Ritardo
   const delay = Math.floor((info.expected - info.aimed) / 60000);
 
   ctx.font = "70px Arial";
   ctx.fillText("Ritardo:", 40, 600);
-
   ctx.font = "80px Arial";
   ctx.fillText(`${delay} min`, 40, 700);
 }
@@ -90,6 +78,13 @@ function draw(info) {
 async function update() {
   const info = await getMoovit();
   draw(info);
+
+  // Esporta PNG
+  const c = document.getElementById("k");
+  const png = c.toDataURL("image/png");
+
+  // Mostra la PNG come immagine (per il Kindle)
+  document.body.innerHTML = `<img src="${png}" />`;
 }
 
 setInterval(update, 10000);
